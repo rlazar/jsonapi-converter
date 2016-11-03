@@ -1,9 +1,6 @@
 package com.github.jasminb.jsonapi;
 
-import com.github.jasminb.jsonapi.annotations.Id;
-import com.github.jasminb.jsonapi.annotations.Meta;
-import com.github.jasminb.jsonapi.annotations.Relationship;
-import com.github.jasminb.jsonapi.annotations.Type;
+import com.github.jasminb.jsonapi.annotations.*;
 
 import java.lang.reflect.Field;
 import java.util.HashMap;
@@ -32,6 +29,9 @@ public class ConverterConfiguration {
 	private final Map<Class<?>, Field> metaFieldMap = new HashMap<>();
 	private final Map<Class<?>, Field> linkFieldMap = new HashMap<>();
 
+	private final Map<Class<?>, Map<String, Field>> relationshipExtractMetaTypeMap = new HashMap<>();
+	private final Map<Field, MapFromRelationshipMeta> fieldMapFromRelationshipMetaMap = new HashMap<>();
+
 	/**
 	 * Creates new ConverterConfiguration.
 	 * @param classes list of mapped classes
@@ -49,6 +49,21 @@ public class ConverterConfiguration {
 			typeAnnotations.put(clazz, annotation);
 			relationshipTypeMap.put(clazz, new HashMap<String, Class<?>>());
 			relationshipFieldMap.put(clazz, new HashMap<String, Field>());
+			relationshipExtractMetaTypeMap.put(clazz, new HashMap<String, Field>());
+
+			// collecting MapFromRelationshipMeta fields
+			List<Field> relationshipMetaFields = ReflectionUtils.getAnnotatedFields(clazz, MapFromRelationshipMeta.class, true);
+			for (Field relationshipMetaField : relationshipMetaFields) {
+				relationshipMetaField.setAccessible(true);
+
+				MapFromRelationshipMeta relationshipMeta = relationshipMetaField.getAnnotation(MapFromRelationshipMeta.class);
+				Class<?> targetType = ReflectionUtils.getFieldType(relationshipMetaField);
+
+				//relationshipTypeMap.get(clazz).put(relationshipMeta.value(), targetType);
+				relationshipExtractMetaTypeMap.get(clazz).put(relationshipMeta.value(), relationshipMetaField);
+				fieldMapFromRelationshipMetaMap.put(relationshipMetaField, relationshipMeta);
+			}
+
 
 			// collecting Relationship fields
 			List<Field> relationshipFields = ReflectionUtils.getAnnotatedFields(clazz, Relationship.class, true);
@@ -186,6 +201,16 @@ public class ConverterConfiguration {
 	}
 
 	/**
+	 * Returns relationship field.
+	 * @param clazz {@link Class} class holding relationship
+	 * @param fieldName {@link String} name of the field
+	 * @return {@link Field} field
+	 */
+	public Field getMapFromRelationshipMetaField(Class<?> clazz, String fieldName) {
+		return relationshipExtractMetaTypeMap.get(clazz).get(fieldName);
+	}
+
+	/**
 	 * Returns a type of a relationship.
 	 * @param clazz {@link Class} owning the field with relationship annotation
 	 * @param fieldName {@link String} name of the field
@@ -208,6 +233,10 @@ public class ConverterConfiguration {
 		return fieldRelationshipMap.get(field);
 	}
 
+
+	public MapFromRelationshipMeta getFieldMapFromRelationshipMeta(Field field){
+		return fieldMapFromRelationshipMetaMap.get(field);
+	}
 	/**
 	 * Returns list of all fields annotated with {@link Relationship} annotation for given class.
 	 * @param clazz {@link Class} to get relationship fields for

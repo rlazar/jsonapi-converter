@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.type.MapType;
 import com.fasterxml.jackson.databind.type.TypeFactory;
+import com.github.jasminb.jsonapi.annotations.MapFromRelationshipMeta;
 import com.github.jasminb.jsonapi.annotations.Relationship;
 import com.github.jasminb.jsonapi.exceptions.DocumentSerializationException;
 import com.github.jasminb.jsonapi.models.errors.Error;
@@ -18,14 +19,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static com.github.jasminb.jsonapi.JSONAPISpecConstants.*;
 
@@ -392,7 +386,30 @@ public class ResourceConverter {
 				JsonNode relationship = relationships.get(field);
 				Field relationshipField = configuration.getRelationshipField(object.getClass(), field);
 
+
 				if (relationshipField != null) {
+
+					//Handle mappings from Relationship' Meta to parent object if any
+					Field mapFromRelationshipMetaField = configuration.getMapFromRelationshipMetaField(object.getClass(), field);
+
+					if(mapFromRelationshipMetaField != null ){
+						MapFromRelationshipMeta metaMap = configuration.getFieldMapFromRelationshipMeta(mapFromRelationshipMetaField);
+						JsonNode meta = relationship.get(META);
+						if(meta != null) {
+							Object value = null;
+							JsonNode sourceNode = meta.get(metaMap.attribute());
+							if(sourceNode != null) {
+								JsonParser p = objectMapper.treeAsTokens(sourceNode);
+								try {
+									value = objectMapper.readValue(p, mapFromRelationshipMetaField.getType());
+								} catch (IOException e) {
+									// TODO: log? No recovery.
+								}
+							}
+							mapFromRelationshipMetaField.set(object, value);
+						}
+					}
+
 					// Get target type
 					Class<?> type = configuration.getRelationshipType(object.getClass(), field);
 

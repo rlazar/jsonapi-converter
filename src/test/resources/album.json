@@ -1,0 +1,31 @@
+{
+  "data": {
+    "id": "fe3dc5a7-dc76-490f-a076-c0ab059aad48",
+    "type": "albums",
+    "attributes": {
+      "media": ["fe3dc5a7-dc76-490f-a076-c0ab059aad48"],
+      "subscribers": ["e4a751b6-3ed7-4b03-9566-67457f6976b7"],
+      "createdAt": "2015-10-14T04:23:18.137Z",
+      "updatedAt": "2015-10-14T04:23:18.137Z",
+      "title": "PJ's SF trip",
+      "shortID": "jh2Df8S"
+    },
+    "relationships": {
+      "user": {
+        "data": {
+          "id": "ba5aaeb9-bf0f-47c7-84b4-f09976ecf9ee",
+          "type": "users"
+        }
+      },
+      "cover": {
+        "meta": {
+          "uri": "http://localhost:3000//images/media1.jpg"
+        },
+        "data": {
+          "id": "ba5aaeb9-bf0f-47c7-84b4-f09976ecf9ee",
+          "type": "media"
+        }
+      }
+    }
+  }
+}
